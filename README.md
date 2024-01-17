@@ -8,10 +8,6 @@ After the exercise, you will be asked to create and submit a network application
 
 The network you'll use in this exercise includes 3 hosts and a switch with an OpenFlow controller (POX):
 
-<!-- ![500pt](images/topo.png =250x)
-
-<img src="images/topo.jpg" alt="topo" width="200"/> -->
-
 <img src="https://github.com/wontoniii/simple-controller/blob/main/images/topo.png" width="350" />
 
 Figure 1: Topology for the Network under Test
@@ -63,7 +59,7 @@ The POX controller comes pre-installed with the provided VM image.
 Now, run the basic hub example:
 
 ```bash
-$ pox.py log.level --DEBUG forwarding.hub
+$ ./pox.py log.level --DEBUG forwarding.hub
 ```
 
 This tells POX to enable verbose logging and to start the hub component.
@@ -254,7 +250,7 @@ This time, let’s verify that hosts can ping each other when the controller is 
 
 
 ```bash
-$ pox.py log.level --DEBUG forwarding.l2_learning
+$ ./pox.py log.level --DEBUG forwarding.l2_learning
 ```
 
 Like before, we'll create xterms for each host and view the traffic in each. In the Mininet console, start up three xterms:
@@ -274,7 +270,7 @@ Arrange each xterm so that they're all on the screen at once. This may require r
 In the xterms for h2 and h3, run tcpdump, a utility to print the packets seen by a host:
 
 ```bash
-# tcpdump -XX -n -i h2-eth0
+tcpdump -XX -n -i h2-eth0
 ```
 
 
@@ -284,7 +280,7 @@ and respectively:
 
 
 ```bash
-# tcpdump -XX -n -i h3-eth0
+tcpdump -XX -n -i h3-eth0
 ```
 
 
@@ -294,7 +290,7 @@ In the xterm for h1, send a ping:
 
 
 ```bash
-# ping -c 1 10.0.0.2
+ping -c 1 10.0.0.2
 ```
 
 
@@ -303,19 +299,14 @@ Here, the switch examines each packet and learn the source-port mapping. Thereaf
 
 You can close the xterms now.
 
-
-
 # Assignment
 
 ## Background
 
-
 A Firewall is a network security system that is used to control the flow of ingress and egress traffic usually between a more secure local-area network (LAN) and a less secure wide-area network (WAN). The system analyses data packets for parameters like L2/L3 headers (i.e., MAC and IP address) or performs deep packet inspection (DPI) for higher layer parameters (like application type and services etc) to filter network traffic. A firewall acts as a barricade between a trusted, secure internal network and another network (e.g. the Internet) which is supposed to be not very secure or trusted.
 
 
-
 In this assignment, your task is to implement a layer 2 firewall that runs alongside the MAC learning module on the POX OpenFlow controller. The firewall application is provided with a list of MAC address pairs i.e., access control list (ACLs). When a connection establishes between the controller and the switch, the application installs flow rule entries in the OpenFlow table to disable all communication between each MAC pair.
-
 
 
 ## Network Topology
@@ -323,49 +314,34 @@ In this assignment, your task is to implement a layer 2 firewall that runs along
 Your firewall should be agnostic of the underlying topology. It should take MAC pair list as input and install it on the switches in the network. To make things simple, we will implement a less intelligent approach and will install rules on all the switches in the network.  
 
 
-
 ## Handling Conflicts
-
-
 
 POX allows running multiple applications concurrently i.e., MAC learning can be done in conjunction with firewall, but it doesn’t automatically handles rule conflicts. You have to make sure, yourself, that conflicting rules are not being installed by the two applications e.g., both applications trying to install a rule with same src/dst MAC at the same priority level but with different actions. The most simplistic way to avoid this contention is to assign priority level to each application.
 
+## Understanding the Code
 
+Go to the directory with the code base in your guest VM. 
 
-## <a name="h.j57egno8inn0"></a><span class="c19">Understanding the Code
-
-
-
-To start this assignment update the course's Github repo (by default, ```Coursera-SDN```) on your host machine using ```git pull```. Turn on your guest VM (if it is turned off) using ```vagrant up```. Now ssh into the guest VM using ```vagrant ssh```. Go to the directory with the updated code base in your guest VM. 
 ```bash
-cd /vagrant/assignments/simple-controller
+cd simple-controller
 ```
- It consists of three files:
 
-
+It consists of two files:
 
 1.  ```firewall.py```: a sekleton class which you will update with the logic for installing firewall rules.
 2.  ```firewall-policies.csv```:  a list of MAC pairs (i.e., policies) read as input by the firewall application.
-3.  ```submit.py```: used to submit your code and output to the coursera servers for grading.
-
-
 
 You don’t have to do any modifications in ```firewall-policies.csv``` and ```submit.py```.
 
-
-
-The firewall.py is populated with a skeleton code. It consists of a firewall class that has a _handle_ConnectionUp function. It also has a global variable, policyFile, that holds the path of the firewall-policies.csv file. Whenever a connection is established between the POX controller and the OpenFlow switch the _handle_ConnectionUp functions gets executed.
+The `firewall.py` is populated with a skeleton code. It consists of a firewall class that has a `_handle_ConnectionUp` function. It also has a global variable, policyFile, that holds the path of the firewall-policies.csv file. Whenever a connection is established between the POX controller and the OpenFlow switch the `_handle_ConnectionUp` functions gets executed.
 
 
 
-Your task is to read the policy file and update the _handle_ConnectionUp function. The function should install rules in the OpenFlow switch that drop packets whenever a matching src/dst MAC address (for any of the listed MAC pairs) enters the switch. <span class="c24">(Note: make sure that you handle the conflicts carefully. Follow the technique described in the section above)
-
-
+Your task is to read the policy file and update the _handle_ConnectionUp function. The function should install rules in the OpenFlow switch that drop packets whenever a matching src/dst MAC address (for any of the listed MAC pairs) enters the switch. (Note: make sure that you handle the conflicts carefully. Follow the technique described in the section above)
 
 ## Testing your Code
 
 Once you have your code, copy the firewall.py in the `$POX_LOCATION/pox/misc` directory on your VM. Also in the same directory create the following file:
-
 
 
 ```bash
@@ -373,26 +349,20 @@ $ cd $POX_LOCATION/pox/misc
 $ touch firewall-policies.csv
 ```
 
-
 and copy the following lines in it:
-
 
 ```csv
 id,mac_0,mac_1
 1,00:00:00:00:00:01,00:00:00:00:00:02
 ```
 
-
 This will cause the firewall application to install a flow rule entry to disable all communication between host (h1) and host (h2).
-
-
 
 Run POX controller:
 
-
 ```bash
 $ cd $POX_LOCATION
-$ pox.py forwarding.l2_learning misc.firewall 
+$ ./pox.py forwarding.l2_learning misc.firewall 
 ```
 
 This will run the controller with both MAC learning and firewall application.
@@ -433,8 +403,6 @@ mininet> exit
 ```bash
 $ sudo fuser -k 6633/tcp
 ```
-
-
 
 ## Submitting your Code
 
