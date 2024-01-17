@@ -12,7 +12,7 @@ The network you'll use in this exercise includes 3 hosts and a switch with an Op
 
 <img src="images/topo.jpg" alt="topo" width="200"/> -->
 
-<img src="https://user-images.githubusercontent.com/images/topo.png" width="200" />
+<img src="https://github.com/wontoniii/simple-controller/blob/main/images/topo.png" width="200" />
 
 Figure 1: Topology for the Network under Test
 
